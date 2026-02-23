@@ -1,0 +1,28 @@
+---
+# Database identification
+app_db_name: "keycloak"
+app_db_user: "keycloak"
+
+# RBAC Logic
+app_schema_role: "keycloak_schema_role"
+app_admin_group: "db_admin_grp"
+
+# Network Access
+app_db_host_ip: "192.168.1.201"
+app_db_port: 5432
+
+# Path settings (AlmaLinux defaults)
+pg_config_path: "/var/lib/pgsql/data/pg_hba.conf"
+
+# Versioning
+keycloak_version: "26.0.0" # Latest stable as of 2026
+
+# HTTP Settings
+keycloak_http_port: 8080
+keycloak_proxy_mode: "edge" # Use 'edge' if you'll use Nginx Proxy Manager later
+keycloak_public_url: "sso.home.lab"
+
+# Bootstrap Admin (Will be pulled from Vault)
+# These names must match what's in your vault file
+admin_user: "{{ vault_keycloak_admin_user }}"
+admin_password: "{{ vault_keycloak_admin_password }}"

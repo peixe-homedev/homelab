@@ -1,0 +1,110 @@
+---
+- name: Install and Configure Keycloak
+  hosts: keycloak-01
+  become: true
+  vars:
+    ansible_remote_tmp: /tmp
+  # vars_files:
+  #   - "../host_vars/keycloak-01/vars.yml"
+  #   - "../host_vars/db-server-01/vault"
+
+  tasks:
+    - name: Ensure global tmp has correct permissions
+      file:
+        path: /tmp
+        state: directory
+        mode: '1777'
+    
+    - name: Install Java 17 and dependencies
+      apt:
+        name: 
+          - sudo
+          - openjdk-17-jre-headless
+          - tar
+          - curl
+        update_cache: yes
+        state: present
+
+    - name: Create dedicated system user for Keycloak
+      user:
+        name: keycloak
+        system: yes
+        shell: /usr/sbin/nologin
+        create_home: no
+
+    - name: Download and extract Keycloak binary
+      unarchive:
+        src: "https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz"
+        dest: /opt/
+        remote_src: yes
+        owner: keycloak
+        group: keycloak
+        creates: "/opt/keycloak-{{ keycloak_version }}"
+
+    - name: Maintain symbolic link for easy upgrades
+      file:
+        src: "/opt/keycloak-{{ keycloak_version }}"
+        dest: /opt/keycloak
+        state: link
+        owner: keycloak
+        group: keycloak
+
+    - name: Run optimization build
+      command: "/opt/keycloak/bin/kc.sh build"
+      become: yes
+      become_user: keycloak
+      environment:
+        KC_DB: postgres
+      register: kc_build
+      # Optimized check: if the build was already done, 
+      # it won't show 'Build profile' in stdout.
+      changed_when: "'Updating the configuration' in kc_build.stdout"
+
+    - name: Deploy Systemd service unit
+      template:
+        src: templates/keycloak.service.j2
+        dest: /etc/systemd/system/keycloak.service
+      notify: 
+        - Reload Systemd
+        - Rebuild Keycloak
+        - Restart Keycloak
+
+    - name: Ensure Keycloak is enabled and running
+      systemd:
+        name: keycloak
+        state: started
+        enabled: yes
+
+    - name: Create local CA directory
+      file:
+        path: /usr/local/share/ca-certificates/homelab
+        state: directory
+        mode: '0755'
+
+    - name: Copy Root CA to Keycloak LXC
+      copy:
+        src: "../files/lab-ca.crt"
+        dest: /usr/local/share/ca-certificates/homelab/lab-ca.crt
+        mode: '0644'
+      register: ca_added
+
+    - name: Update system trust store
+      command: update-ca-certificates
+      when: ca_added.changed
+
+  handlers:
+    - name: Reload Systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Rebuild Keycloak
+      command: /opt/keycloak/bin/kc.sh build --db=postgres
+      become: yes
+      become_user: keycloak  # Run as the keycloak user, not root
+      args:
+        chdir: /opt/keycloak
+
+    - name: Restart Keycloak
+      service:
+        name: keycloak
+        state: restarted

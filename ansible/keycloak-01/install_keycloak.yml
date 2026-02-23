@@ -1,0 +1,107 @@
+---
+- name: Install and Configure Keycloak
+  hosts: keycloak-01
+  become: true
+  vars:
+    ansible_remote_tmp: /tmp
+
+  tasks:
+    - name: Ensure global tmp has correct permissions
+      file:
+        path: /tmp
+        state: directory
+        mode: '1777'
+    
+    - name: Install Java 17 and dependencies
+      apt:
+        name: 
+          - sudo
+          - openjdk-17-jre-headless
+          - tar
+          - curl
+        update_cache: yes
+        state: present
+
+    - name: Create dedicated system user for Keycloak
+      user:
+        name: keycloak
+        system: yes
+        shell: /usr/sbin/nologin
+        create_home: no
+
+    - name: Download and extract Keycloak binary
+      unarchive:
+        src: "https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz"
+        dest: /opt/
+        remote_src: yes
+        owner: keycloak
+        group: keycloak
+        creates: "/opt/keycloak-{{ keycloak_version }}"
+
+    - name: Maintain symbolic link
+      file:
+        src: "/opt/keycloak-{{ keycloak_version }}"
+        dest: /opt/keycloak
+        state: link
+        owner: keycloak
+        group: keycloak
+
+    - name: Deploy Systemd service unit
+      template:
+        src: templates/keycloak.service.j2
+        dest: /etc/systemd/system/keycloak.service
+      register: keycloak_service_config
+      notify: 
+        - Reload Systemd
+        - Rebuild Keycloak
+        - Restart Keycloak
+
+    - name: Create local CA directory
+      file:
+        path: /usr/local/share/ca-certificates/homelab
+        state: directory
+        mode: '0755'
+
+    - name: Copy Root CA to Keycloak LXC
+      copy:
+        src: "../files/lab-ca.crt"
+        dest: /usr/local/share/ca-certificates/homelab/lab-ca.crt
+        mode: '0644'
+      register: ca_added
+
+    - name: Update system trust store
+      command: update-ca-certificates
+      when: ca_added.changed
+
+    # This is the "Magic" step: if the systemd file changed, 
+    # run the handlers NOW so the build happens before the final check.
+    - name: Force immediate config rebuild if needed
+      meta: flush_handlers
+
+    - name: Ensure Keycloak is enabled and running
+      systemd:
+        name: keycloak
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Reload Systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Rebuild Keycloak
+      command: /opt/keycloak/bin/kc.sh build
+      become: yes
+      become_user: keycloak
+      environment:
+        KC_DB: postgres
+        KC_PROXY: edge
+        KC_HOSTNAME_STRICT: "false"
+        KC_HTTP_ENABLED: "true"
+      args:
+        chdir: /opt/keycloak
+
+    - name: Restart Keycloak
+      service:
+        name: keycloak
+        state: restarted

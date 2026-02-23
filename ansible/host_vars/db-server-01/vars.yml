@@ -1,0 +1,35 @@
+---
+# Versioning
+postgres_version: "17"
+postgres_package: "postgresql17-server"
+
+# Storage
+storage_disks:
+  data:
+    dev: "/dev/disk/by-id/scsi-SQEMU_QEMU_HARDDISK_PGDATA01"
+    path: "/var/lib/pgsql"
+  backup:
+    dev: "/dev/disk/by-id/scsi-SQEMU_QEMU_HARDDISK_PGBACKUP01"
+    path: "/mnt/backups"
+
+# RBAC Strategy - Tier A (Groups/Roles)
+pg_rbac_groups:
+  - { name: "db_admin_grp", flags: "NOLOGIN,CREATEDB,CREATEROLE" }
+  - { name: "app_rw_grp", flags: "NOLOGIN" }
+
+# RBAC Strategy - Tier B (Login Users)
+pg_rbac_users:
+  - name: "joaopeixe"
+    password: "{{ vault_joaopeixe_password }}"
+
+pg_rbac_memberships:
+  - { user: "joaopeixe", group: "db_admin_grp" }
+  - { user: "joaopeixe", group: "app_rw_grp" }
+
+# Network
+homelab_subnet: "192.168.1.0/24"
+
+# Clients allowed to pass firewalld
+trusted_clients:
+  - { ip: "192.168.1.11/32", comment: "ASUS-TUF-2021" }
+  - { ip: "192.168.1.203/32", comment: "vb-manager-prd" }

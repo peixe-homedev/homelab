@@ -1,0 +1,23 @@
+---
+- name: Allow Docker Host Access to Postgres
+  hosts: db_servers  # Make sure this matches your inventory group for db-server-01
+  become: yes
+  vars_files: ../host_vars/docker-01/vars.yml
+
+  tasks:
+    - name: Add pg_hba rule for Docker Host
+      postgresql_pg_hba:
+        dest: "{{ storage_disks.data.path }}/{{ postgres_version }}/data/pg_hba.conf"
+        contype: host
+        users: all
+        source: "{{ docker_ip }}"
+        databases: all
+        method: scram-sha-256 # Or md5, depending on your setup
+        create: true
+      notify: Reload Postgres
+
+  handlers:
+    - name: Reload Postgres
+      service:
+        name: postgresql-{{ postgres_version }}
+        state: reloaded

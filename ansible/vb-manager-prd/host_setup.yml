@@ -1,0 +1,89 @@
+- name: Setup Docker Host
+  hosts: vb-manager-prd
+  become: yes
+  vars:
+    ansible_remote_tmp: /tmp
+
+  tasks:
+    - name: Ensure global tmp has correct permissions
+      file:
+        path: /tmp
+        state: directory
+        mode: '1777'
+
+    # --- DATA DISK PREPARATION ---
+    - name: Format the data disk (ext4)
+      filesystem:
+        fstype: ext4
+        dev: "{{ data_disk_path }}"
+        resizefs: yes 
+
+    - name: Ensure Docker data directory exists
+      file:
+        path: /var/lib/docker
+        state: directory
+        mode: '0711'
+
+    - name: Mount the data disk permanently to /var/lib/docker
+      mount:
+        path: /var/lib/docker
+        src: "{{ data_disk_path }}"
+        fstype: ext4
+        state: mounted
+
+    # --- DOCKER INSTALLATION ---
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Create directory for Docker GPG key
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Docker's official GPG key
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        filename: docker
+        state: present
+
+    - name: Install Docker Engine and Compose
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # --- USER PERMISSIONS ---
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes

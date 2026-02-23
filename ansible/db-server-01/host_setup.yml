@@ -1,0 +1,137 @@
+---
+- name: Configure PostgreSQL 17 Database Server
+  hosts: db-server-01
+  become: yes
+
+  tasks:
+    - name: Ensure Ansible remote temporary directory has correct permissions
+      file:
+        path: /tmp/.ansible/tmp
+        state: directory
+        mode: '1777'  # Again, the Sticky Bit is our friend here
+        recurse: yes
+
+    # --- Storage Section ---
+    - name: Format the Data disk
+      filesystem:
+        fstype: xfs
+        dev: "{{ storage_disks.data.dev }}"
+
+    - name: Format the Backup disk
+      filesystem:
+        fstype: xfs
+        dev: "{{ storage_disks.backup.dev }}"
+
+    - name: Mount PostgreSQL Data directory
+      mount:
+        path: "{{ storage_disks.data.path }}"
+        src: "{{ storage_disks.data.dev }}"
+        fstype: xfs
+        state: mounted
+
+    - name: Mount Backup directory
+      mount:
+        path: "{{ storage_disks.backup.path }}"
+        src: "{{ storage_disks.backup.dev }}"
+        fstype: xfs
+        state: mounted
+
+    # --- Installation Section ---
+    - name: Install PostgreSQL Repo
+      dnf:
+        name: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+        state: present
+        disable_gpg_check: yes
+
+    - name: Disable default PostgreSQL module
+      command: dnf -qy module disable postgresql
+      register: module_disable
+      changed_when: "'Disabling' in module_disable.stdout"
+      check_mode: no  # Forces the command to run even in --check
+
+    - name: Install PostgreSQL Server
+      dnf:
+        name:
+          - "{{ postgres_package }}"
+          - python3-psycopg2
+        state: present
+
+    - name: Ensure PostgreSQL data directory has correct permissions
+      file:
+        path: "{{ storage_disks.data.path }}"
+        owner: postgres
+        group: postgres
+        state: directory
+        recurse: yes
+
+    - name: Ensure SELinux management packages are installed
+      dnf:
+        name: policycoreutils-python-utils
+        state: present
+
+    - name: Restore SELinux context for PostgreSQL data directory
+      command: restorecon -Rv "{{ storage_disks.data.path }}"
+      register: restorecon_result
+      changed_when: restorecon_result.stdout != ""
+
+    - name: Initialize PostgreSQL 17 database
+      command: "/usr/pgsql-{{ postgres_version }}/bin/postgresql-{{ postgres_version }}-setup initdb"
+      args:
+        creates: "{{ storage_disks.data.path }}/{{ postgres_version }}/data/PG_VERSION"
+
+    - name: Start and enable PostgreSQL
+      service:
+        name: "postgresql-{{ postgres_version }}"
+        state: started
+        enabled: yes
+
+    # --- Configuration Section ---
+    - name: Configure PostgreSQL to listen on all interfaces
+      lineinfile:
+        path: "{{ storage_disks.data.path }}/{{ postgres_version }}/data/postgresql.conf"
+        regexp: '^#?listen_addresses ='
+        line: "listen_addresses = '*'"
+      notify: Restart Postgres
+
+    # Replaced by server to server line
+    # - name: Allow homelab subnet in pg_hba.conf
+    #   lineinfile:
+    #     path: "{{ storage_disks.data.path }}/{{ postgres_version }}/data/pg_hba.conf"
+    #     line: "host    all             all             {{ homelab_subnet }}          scram-sha-256"
+    #   notify: Restart Postgres
+
+    - name: Force handlers to run now (Restart Postgres)
+      meta: flush_handlers
+
+    # --- Security Section ---
+    - name: Ensure firewalld and dependencies are present
+      dnf:
+        name: [firewalld, python3-firewall]
+        state: present
+
+    - name: Ensure firewalld is running
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+
+    - name: Allow only trusted IPs through the firewall to Postgres
+      ansible.posix.firewalld:
+        rich_rule: 'rule family="ipv4" source address="{{ item.ip }}" port port="5432" protocol="tcp" accept'
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop: "{{ trusted_clients }}"
+
+    # - name: Ensure generic postgresql service is closed
+    #   ansible.posix.firewalld:
+    #     service: postgresql
+    #     state: disabled
+    #     permanent: yes
+    #     immediate: yes
+
+  handlers:
+    - name: Restart Postgres
+      service:
+        name: "postgresql-{{ postgres_version }}"
+        state: restarted

@@ -1,0 +1,35 @@
+---
+- name: Deploy Streamlit App
+  hosts: vb-manager-prd
+
+  tasks:
+    - name: Clone the repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ dest_dir }}"
+        version: main
+        force: yes
+      become: no
+
+    - name: Create .env file from template
+      template:
+        src: "env.j2"
+        dest: "{{ dest_dir }}/.env"
+        mode: '0600'
+      become: yes
+
+    - name: Deploy our production docker-compose
+      copy:
+        src: "../files/docker-compose.prd.yml"
+        dest: "{{ dest_dir }}/docker-compose.prd.yml"
+        mode: '0644'
+      become: yes
+
+    - name: Build and Start Container
+      community.docker.docker_compose_v2:
+        project_src: "{{ dest_dir }}"
+        files: 
+          - "docker-compose.prd.yml"  # CRITICAL: Tell Docker which file to use
+        state: present
+        build: always
+      become: yes

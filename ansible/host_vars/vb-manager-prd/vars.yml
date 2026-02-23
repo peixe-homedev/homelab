@@ -1,0 +1,13 @@
+# Hardcoded prefix based on the `ls -l /dev/disk/by-id/` output, variable serial
+disk_serial: "APPDATA01"
+data_disk_path: "/dev/disk/by-id/scsi-SQEMU_QEMU_HARDDISK_{{ disk_serial }}"
+
+# Git Repo and Deployment destination
+repo_url: "https://oauth2:{{ vault_github_token }}@github.com/jpeixe72/VB_TeamManager.git"
+dest_dir: "/home/ubuntu/Projects/vb-manager"
+
+# Database settings
+db_host: "192.168.1.2"
+db_port: "5432"
+db_name: "VB_TeamManager_db"
+db_user: "app_user"

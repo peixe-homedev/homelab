@@ -1,0 +1,10 @@
+services:
+  app:
+    build: 
+      context: ./app  # This tells Docker the Dockerfile is right here
+    container_name: vb-manager-app
+    ports:
+      - "80:8501"
+    env_file:
+      - .env      # Ansible will upload your .env.prod as exactly '.env'
+    restart: always

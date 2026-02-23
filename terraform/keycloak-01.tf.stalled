@@ -1,0 +1,50 @@
+# --- KEYCLOAK LXC DEFINITION ---
+resource "proxmox_virtual_environment_container" "keycloak_lxc" {
+  node_name = "pve"
+  vm_id     = 200 
+
+  # Container OS and Version
+  operating_system {
+    # Make sure this template exists in your storage 'local'
+    # You might need to run 'pveam download local debian-12-standard_12.12-1_amd64.tar.zst'
+    template_file_id = "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
+    type             = "debian"
+  }
+
+  cpu {
+    cores = 1
+  }
+
+  memory {
+    dedicated = 1024
+    swap      = 512
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    size         = 8
+  }
+
+  network_interface {
+    name   = "eth0"
+    bridge = "vmbr0"
+  }
+
+  initialization {
+    hostname = "keycloak-01" # This is where hostname belongs
+    
+    ip_config {
+      ipv4 {
+        address = "192.168.1.200/24" 
+        gateway = "192.168.1.1"
+      }
+    }
+
+    user_account {
+      keys = [var.ssh_public_key]
+    }
+  }
+
+  unprivileged = true
+  started      = true
+}

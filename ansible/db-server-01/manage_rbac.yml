@@ -1,0 +1,7 @@
+- name: Manage PostgreSQL RBAC
+  hosts: db-server-01  # Specific to this host
+  become: yes
+
+  tasks:
+    - name: Execute RBAC tasks
+      include_tasks: rbac.yml

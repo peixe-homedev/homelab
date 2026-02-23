@@ -1,0 +1,36 @@
+[Unit]
+Description=Keycloak Identity and Access Management
+After=network.target
+
+[Service]
+User=keycloak
+Group=keycloak
+Type=simple
+
+# Database Configuration
+Environment=KC_DB=postgres
+Environment=KC_DB_URL=jdbc:postgresql://{{ app_db_host_ip }}:{{ app_db_port }}/{{ app_db_name }}
+Environment=KC_DB_USERNAME={{ app_db_user }}
+Environment=KC_DB_PASSWORD={{ vault_keycloak_db_password }}
+
+# HTTP & Proxy Settings
+# Force Keycloak to assume all frontend traffic is HTTPS
+Environment=KC_HOSTNAME_STRICT_HTTPS=true
+# 'edge' tells Keycloak to trust TLS termination at NPM
+Environment=KC_PROXY=edge
+Environment=KC_HTTP_ENABLED=true
+Environment=KC_HTTP_PORT={{ keycloak_http_port }}
+Environment=KC_HOSTNAME=sso.home.lab
+Environment=KC_HOSTNAME_STRICT=false
+
+# Initial Admin Bootstrap
+Environment=KC_BOOTSTRAP_ADMIN_USERNAME={{ vault_keycloak_admin_user }}
+Environment=KC_BOOTSTRAP_ADMIN_PASSWORD={{ vault_keycloak_admin_password }}
+
+# Execution - Using --optimized requires the 'build' command to have run with same env vars
+ExecStart=/opt/keycloak/bin/kc.sh start --optimized
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

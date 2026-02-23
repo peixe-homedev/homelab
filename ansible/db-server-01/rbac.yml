@@ -1,0 +1,32 @@
+---
+# Task 1: Create the Groups (Roles)
+- name: Ensure RBAC groups exist
+  community.postgresql.postgresql_user:
+    name: "{{ item.name }}"
+    role_attr_flags: "{{ item.flags }}"
+    state: present
+  loop: "{{ pg_rbac_groups }}"
+  become: yes
+  become_user: postgres
+
+# Task 2: Create the Login Users and assign them to groups
+# Step 1: Just make the user exist
+- name: Ensure login users exist
+  community.postgresql.postgresql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    state: present
+  loop: "{{ pg_rbac_users }}"
+  become: yes
+  become_user: postgres
+  no_log: true
+
+# Step 2: Grant the groups (memberships)
+- name: Assign users to groups
+  community.postgresql.postgresql_membership:
+    group: "{{ item.group }}"
+    target_roles: "{{ item.user }}"
+    state: present
+  loop: "{{ pg_rbac_memberships }}"
+  become: yes
+  become_user: postgres

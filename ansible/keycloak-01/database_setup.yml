@@ -1,0 +1,59 @@
+---
+- name: Keycloak Database and Dedicated RBAC Setup
+  hosts: db-server-01
+  become: true
+  vars_files: ../host_vars/keycloak-01/vars.yml
+
+  tasks:
+    - name: Create the Application Database
+      community.postgresql.postgresql_db:
+        name: "{{ app_db_name }}"
+        owner: "{{ app_admin_group }}"
+      become_user: postgres
+
+    - name: Create dedicated Schema Role (using user module)
+      community.postgresql.postgresql_user:
+        name: "{{ app_schema_role }}"
+        role_attr_flags: "NOLOGIN"
+        state: present
+      become_user: postgres
+
+    - name: Grant Schema permissions to the Schema Role
+      community.postgresql.postgresql_privs:
+        db: "{{ app_db_name }}"
+        role: "{{ app_schema_role }}"
+        objs: public
+        privs: CREATE,USAGE
+        type: schema
+      become_user: postgres
+
+    - name: Assign App Login User to the Schema Role
+      community.postgresql.postgresql_membership:
+        group: "{{ app_schema_role }}"
+        target_roles: "{{ app_db_user }}"
+      become_user: postgres
+
+    - name: Configure pg_hba.conf for App Host
+      community.postgresql.postgresql_pg_hba:
+        dest: "{{ storage_disks.data.path }}/{{ postgres_version }}/data/pg_hba.conf"
+        contype: host
+        databases: "{{ app_db_name }}"
+        users: "{{ app_db_user }}"
+        address: "{{ app_db_host_ip }}/32"
+        method: scram-sha-256
+      become_user: postgres
+      notify: Reload Postgres
+
+    - name: Open Firewall port for App Host
+      ansible.posix.firewalld:
+        rich_rule: 'rule family="ipv4" source address="{{ app_db_host_ip }}" port protocol="tcp" port="{{ app_db_port }}" accept'
+        permanent: true
+        state: enabled
+        immediate: true
+
+  handlers:
+    - name: Reload Postgres
+      systemd:
+        # Use the variable you already have if possible, or the exact name
+        name: "postgresql-{{ postgres_version }}" 
+        state: reloaded
