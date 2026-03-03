@@ -1,0 +1,21 @@
+# --- Swap config
+swap_file_path: "/swapfile"
+swap_size_gb: "2"
+
+# --- WD Home Cloud Duo Details
+smb_share: "//192.168.1.248/JPEIXE-WD/nextcloud"
+mount_path: "/mnt/wd_cloud"
+smb_user: "JPEIXE-WD"
+# smb_pass: "@vault"
+
+# --- Nexcloud Service Config
+nextcloud_fqdn: "nextcloud.home.lab" # Adjust this for your NPM setup later
+# vault_redis_password: "@vault"
+npm_ip: "192.168.1.2"
+
+
+# --- DB environment ---
+pg_host: "192.168.1.201" # Put your DB server IP here
+pg_db_name: "nextcloud"
+pg_db_user: "nextcloud_user"
+# vault_nextcloud_password: "@vault" 

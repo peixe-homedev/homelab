@@ -20,7 +20,7 @@
 
     - name: Deploy our production docker-compose
       copy:
-        src: "../files/docker-compose.prd.yml"
+        src: "../files/vb-manager-prd/docker-compose.prd.yml"
         dest: "{{ dest_dir }}/docker-compose.prd.yml"
         mode: '0644'
       become: yes

@@ -1,0 +1,42 @@
+volumes:
+  nextcloud_core:
+    # This stores the Nextcloud app, themes, and config on your fast local SSD
+
+services:
+  redis:
+    image: redis:alpine
+    restart: always
+    # Using the vaulted password to lock down the local Redis cache
+    command: redis-server --requirepass '{{ vault_redis_password | replace("$", "$$") }}'
+
+  nextcloud:
+    image: nextcloud:apache
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - redis
+    environment:
+      # Database Connections 
+      - POSTGRES_HOST={{ pg_host }}
+      - POSTGRES_DB={{ pg_db_name }}
+      - POSTGRES_USER={{ pg_db_user }}
+      - POSTGRES_PASSWORD={{ vault_nextcloud_password | replace("$", "$$") }}
+      
+      # Redis Connections
+      - REDIS_HOST=redis
+      - REDIS_HOST_PASSWORD={{ vault_redis_password | replace("$", "$$") }}
+      
+      # Domain and Data Directory
+      - NEXTCLOUD_TRUSTED_DOMAINS={{ nextcloud_fqdn }}
+      - NEXTCLOUD_DATA_DIR=/var/www/html/data
+
+      # --- Reverse Proxy Settings ---
+      - OVERWRITEPROTOCOL=https
+      - OVERWRITECLIURL=https://{{ nextcloud_fqdn }}
+      - TRUSTED_PROXIES={{ npm_ip }}
+
+    volumes:
+      - nextcloud_core:/var/www/html
+      # The Magic Mount: Binds your WD Cloud directly as the data directory
+      - {{ mount_path }}:/var/www/html/data

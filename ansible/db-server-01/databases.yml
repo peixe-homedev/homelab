@@ -1,0 +1,8 @@
+---
+- name: Create Nextcloud Database
+  community.postgresql.postgresql_db:
+    name: nextcloud
+    owner: nextcloud_user
+    state: present
+  become: yes
+  become_user: postgres

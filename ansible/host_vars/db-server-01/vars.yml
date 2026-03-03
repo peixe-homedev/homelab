@@ -21,10 +21,13 @@ pg_rbac_groups:
 pg_rbac_users:
   - name: "joaopeixe"
     password: "{{ vault_joaopeixe_password }}"
+  - name: "nextcloud_user"
+    password: "{{ vault_nextcloud_password }}"
 
 pg_rbac_memberships:
   - { user: "joaopeixe", group: "db_admin_grp" }
   - { user: "joaopeixe", group: "app_rw_grp" }
+  - { user: "nextcloud_user", group: "app_rw_grp" }
 
 # Network
 homelab_subnet: "192.168.1.0/24"
@@ -33,3 +36,4 @@ homelab_subnet: "192.168.1.0/24"
 trusted_clients:
   - { ip: "192.168.1.11/32", comment: "ASUS-TUF-2021" }
   - { ip: "192.168.1.203/32", comment: "vb-manager-prd" }
+  - { ip: "192.168.1.204/32", comment: "fileserver-01" }

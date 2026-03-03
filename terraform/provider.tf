@@ -15,4 +15,10 @@ provider "proxmox" {
   # Combines Token ID and Secret into the format Proxmox expects: ID=SECRET
   api_token = "${var.proxmox_api_token_id}=${var.proxmox_api_token_secret}"
   insecure  = true # Allows connection even if your Proxmox SSL certificate is self-signed
+
+  ssh{
+    agent = false
+    username = "root"
+    password = var.pve_password
+  }
 }

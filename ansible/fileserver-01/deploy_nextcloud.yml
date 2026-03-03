@@ -1,0 +1,24 @@
+---
+- name: Prepare Nextcloud Docker Host
+  hosts: fileserver-01
+  become: yes
+
+  tasks:
+    - name: Create Nextcloud project directory
+      file:
+        path: /opt/nextcloud
+        state: directory
+        mode: '0755'
+
+    - name: Deploy secure docker-compose template
+      template:
+        src: docker-compose.yml.j2
+        dest: /opt/nextcloud/docker-compose.yml
+        mode: '0600' # Locks the file down to root only
+      no_log: true
+
+    - name: Start Nextcloud via Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: /opt/nextcloud
+        state: present
+        pull: always

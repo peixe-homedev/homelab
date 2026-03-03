@@ -15,3 +15,17 @@ variable "proxmox_api_token_secret" {
 variable "ssh_public_key" {
   type = string
 }
+
+variable "wd_username" {
+  type      = string
+}
+
+variable "wd_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "pve_password" {
+  type      = string
+  sensitive = true
+}
