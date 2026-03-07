@@ -1,4 +1,8 @@
 ---
+# --- Swap config
+swap_file_path: "/swapfile"
+swap_size_gb: "2"
+
 # Versioning
 postgres_version: "17"
 postgres_package: "postgresql17-server"
@@ -37,3 +41,12 @@ trusted_clients:
   - { ip: "192.168.1.11/32", comment: "ASUS-TUF-2021" }
   - { ip: "192.168.1.203/32", comment: "vb-manager-prd" }
   - { ip: "192.168.1.204/32", comment: "fileserver-01" }
+
+# pgBackRest Configuration
+stanza_name: "demo"
+
+# SMB Config
+smb_server_ip: 192.168.1.248
+smb_share_name: JPEIXE-WD
+smb_username: JPEIXE-WD
+# smb_domain: is optional, defaults to WORKGROUP

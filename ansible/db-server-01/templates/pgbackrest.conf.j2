@@ -1,0 +1,11 @@
+[{{ stanza_name }}]
+pg1-path={{ storage_disks.data.path }}/{{ postgres_version }}/data
+
+[global]
+repo1-path={{ storage_disks.backup.path }}/pgbackrest
+repo1-retention-full=2
+process-max=2
+log-level-file=info
+
+[global:archive-push]
+compress-level=3

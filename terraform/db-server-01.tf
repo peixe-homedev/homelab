@@ -10,12 +10,12 @@ resource "proxmox_virtual_environment_vm" "postgres_db" {
   }
 
   cpu {
-    cores = 1 # Keeping it lean for laptop hardware
+    cores = 2 # Keeping it lean for laptop hardware
     type ="host"
   }
 
   memory {
-    dedicated = 1024 # 1GB RAM is plenty for a small Postgres learning instance
+    dedicated = 2048 # 1GB RAM is plenty for a small Postgres learning instance
   }
 
   # Required for Proxmox to show the VM's internal IP and status correctly

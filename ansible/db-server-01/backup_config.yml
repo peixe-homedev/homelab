@@ -1,0 +1,147 @@
+---
+- name: Configure PostgreSQL 17 Backups with pgBackRest
+  hosts: db-server-01
+  become: yes
+
+  tasks:
+    # --- pgBackRest Config
+    - name: Install EPEL repository
+      dnf:
+        name: epel-release
+        state: present
+
+    - name: Enable CRB repository (provides libssh2)
+      command: dnf config-manager --set-enabled crb
+      changed_when: false
+
+    - name: Install pgBackRest
+      dnf:
+        name: pgbackrest
+        state: present
+
+    - name: Create backup directory with correct permissions
+      file:
+        path: "{{ storage_disks.backup.path }}/pgbackrest"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0750'
+
+    - name: Configure /etc/pgbackrest.conf
+      template:
+        src: templates/pgbackrest.conf.j2
+        dest: /etc/pgbackrest.conf
+        owner: postgres
+        group: postgres
+        mode: '0640'
+
+    - name: Update PostgreSQL configuration for archiving
+      lineinfile:
+        path: "{{ storage_disks.data.path }}/{{ postgres_version }}/data/postgresql.conf"
+        regexp: "^{{ item.key }} ="
+        line: "{{ item.key }} = {{ item.value }}"
+      loop:
+        - { key: 'archive_mode', value: "'on'" }
+        - { key: 'archive_command', value: "'pgbackrest --stanza={{ stanza_name }} archive-push %p'" }
+        - { key: 'wal_level', value: "'replica'" }
+      notify: Restart Postgres
+
+    - name: Flush handlers to ensure Postgres is restarted
+      meta: flush_handlers
+
+    - name: Check if stanza is already initialized
+      command: "pgbackrest --stanza={{ stanza_name }} info"
+      register: stanza_info
+      ignore_errors: yes
+      become_user: postgres
+
+    - name: Initialize pgBackRest stanza
+      command: "pgbackrest --stanza={{ stanza_name }} stanza-create"
+      become_user: postgres
+      when: "'status: ok' not in stanza_info.stdout"
+
+    - name: Run first full backup
+      command: "pgbackrest --stanza={{ stanza_name }} --type=full backup"
+      become_user: postgres
+      when: "'status: ok' not in stanza_info.stdout"
+
+    # --- Off-site copy
+    - name: Install rsync
+      dnf:
+        name: rsync
+        state: present
+
+    - name: Allow postgres to mount and umount the SMB sync mountpoint
+      copy:
+        dest: /etc/sudoers.d/postgres_smb_sync
+        content: |
+          postgres ALL=(root) NOPASSWD: /usr/bin/mkdir -p /mnt/smb_pgbackrest_sync
+          postgres ALL=(root) NOPASSWD: /usr/bin/mount -t cifs *
+          postgres ALL=(root) NOPASSWD: /usr/bin/umount /mnt/smb_pgbackrest_sync
+        owner: root
+        group: root
+        mode: '0440'
+
+    - name: Install smbclient and cifs-utils
+      dnf:
+        name:
+          - samba-client
+          - cifs-utils
+        state: present
+
+    - name: Ensure pgBackRest log directory exists and is writable by postgres
+      file:
+        path: /var/log/pgbackrest
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0750'
+
+    - name: Create /etc/pgbackrest directory
+      file:
+        path: /etc/pgbackrest
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0750'
+
+    - name: Create SMB credentials file
+      template:
+        src: templates/smbcredentials.j2
+        dest: /etc/pgbackrest/.smbcredentials
+        owner: postgres
+        group: postgres
+        mode: '0600'
+
+    - name: Deploy SMB offload script
+      template:
+        src: templates/pgbackrest_smb_sync.sh.j2
+        dest: /usr/local/bin/pgbackrest_smb_sync.sh
+        owner: postgres
+        group: postgres
+        mode: '0750'
+
+    # --- Cron configuration
+    - name: Schedule full backup (Weekly on Monday at 02:00)
+      ansible.builtin.cron:
+        name: "PostgreSQL Full Backup"
+        user: postgres
+        job: "/usr/bin/pgbackrest --stanza={{ stanza_name }} --type=full backup && /usr/local/bin/pgbackrest_smb_sync.sh"
+        weekday: "1"
+        hour: "02"
+        minute: "00"
+
+    - name: Schedule incremental backup (Daily Tue-Sun at 02:00)
+      ansible.builtin.cron:
+        name: "PostgreSQL Incremental Backup"
+        user: postgres
+        job: "/usr/bin/pgbackrest --stanza={{ stanza_name }} --type=incr backup && /usr/local/bin/pgbackrest_smb_sync.sh"
+        weekday: "2-7"
+        hour: "02"
+        minute: "00"
+
+  handlers:
+    - name: Restart Postgres
+      service:
+        name: "postgresql-{{ postgres_version }}"
+        state: restarted

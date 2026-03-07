@@ -1,0 +1,34 @@
+#!/bin/bash
+# Mirrors pgBackRest repo to SMB share after each backup.
+# Mounts the SMB share temporarily, rsyncs, then unmounts.
+# Exits non-zero on failure so cron can report it.
+set -euo pipefail
+
+CREDENTIALS_FILE="/etc/pgbackrest/.smbcredentials"
+SMB_SHARE="//{{ smb_server_ip }}/{{ smb_share_name }}"
+LOCAL_PATH="{{ storage_disks.backup.path }}/pgbackrest/"
+MOUNT_POINT="/mnt/smb_pgbackrest_sync"
+REMOTE_PATH="$MOUNT_POINT/pgbackrest"
+LOGFILE="/var/log/pgbackrest/smb_sync.log"
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOGFILE"; }
+
+cleanup() {
+  if mountpoint -q "$MOUNT_POINT"; then
+    sudo umount "$MOUNT_POINT"
+    log "SMB share unmounted."
+  fi
+}
+trap cleanup EXIT
+
+log "Starting SMB sync..."
+
+sudo mkdir -p "$MOUNT_POINT"
+sudo mount -t cifs "$SMB_SHARE" "$MOUNT_POINT" \
+  --options credentials="$CREDENTIALS_FILE",uid=postgres,gid=postgres,file_mode=0640,dir_mode=0750
+
+log "SMB share mounted. Starting rsync..."
+
+rsync -av --delete --no-links "$LOCAL_PATH" "$REMOTE_PATH"
+
+log "SMB sync completed successfully."
