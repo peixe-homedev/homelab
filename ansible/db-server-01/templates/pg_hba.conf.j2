@@ -1,0 +1,19 @@
+# pg_hba.conf - managed by Ansible, do not edit manually
+
+# Local Unix socket
+local   replication   all               peer
+local   all           postgres          peer
+local   all           all               peer
+
+# Loopback
+host    all           all               127.0.0.1/32   scram-sha-256
+host    all           all               ::1/128        scram-sha-256
+
+# Replication
+host    replication   all               127.0.0.1/32   scram-sha-256
+host    replication   all               ::1/128        scram-sha-256
+
+# Application hosts
+{% for rule in pg_hba_host_rules %}
+{{ "host    %-16s %-24s %-24s scram-sha-256" | format(rule.databases, rule.users, rule.source) }}
+{% endfor %}

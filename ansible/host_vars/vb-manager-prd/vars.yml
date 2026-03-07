@@ -7,7 +7,7 @@ repo_url: "https://oauth2:{{ vault_github_token }}@github.com/jpeixe72/VB_TeamMa
 dest_dir: "/home/ubuntu/Projects/vb-manager"
 
 # Database settings
-db_host: "192.168.1.2"
+db_host: "192.168.1.201"
 db_port: "5432"
-db_name: "VB_TeamManager_db"
-db_user: "app_user"
+db_name: "vb_manager_prd"
+db_user: "vb_manager_user"

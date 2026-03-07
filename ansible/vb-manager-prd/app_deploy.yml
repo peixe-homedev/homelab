@@ -17,6 +17,7 @@
         dest: "{{ dest_dir }}/.env"
         mode: '0600'
       become: yes
+      no_log: true
 
     - name: Deploy our production docker-compose
       copy:

@@ -93,19 +93,14 @@
         line: "listen_addresses = '*'"
       notify: Restart Postgres
 
-    # --- pg_hba Section ---
-    - name: Allow Nextcloud VM to connect to its database
-      community.postgresql.postgresql_pg_hba:
+    - name: Deploy pg_hba.conf from template
+      ansible.builtin.template:
+        src: pg_hba.conf.j2
         dest: "{{ storage_disks.data.path }}/{{ postgres_version }}/data/pg_hba.conf"
-        contype: host
-        databases: nextcloud
-        users: nextcloud_user
-        source: 192.168.1.204/32
-        method: scram-sha-256 
-        state: present
-      become: yes
-      become_user: postgres
-      notify: Restart PostgreSQL
+        owner: postgres
+        group: postgres
+        mode: '0600'
+      notify: Restart Postgres
 
     - name: Force handlers to run now (Restart Postgres)
       meta: flush_handlers

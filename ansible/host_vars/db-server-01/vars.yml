@@ -16,6 +16,18 @@ storage_disks:
     dev: "/dev/disk/by-id/scsi-SQEMU_QEMU_HARDDISK_PGBACKUP01"
     path: "/mnt/backups"
 
+# group_vars or host_vars
+pg_hba_host_rules:
+  - databases: nextcloud
+    users: nextcloud_user
+    source: 192.168.1.204/32
+  - databases: vb_manager_prd
+    users: vb_manager_user
+    source: 192.168.1.203/32
+  - databases: all
+    users: joaopeixe
+    source: 192.168.1.11/32
+
 # RBAC Strategy - Tier A (Groups/Roles)
 pg_rbac_groups:
   - { name: "db_admin_grp", flags: "NOLOGIN,CREATEDB,CREATEROLE" }
@@ -27,11 +39,14 @@ pg_rbac_users:
     password: "{{ vault_joaopeixe_password }}"
   - name: "nextcloud_user"
     password: "{{ vault_nextcloud_password }}"
+  - name: "vb_manager_user"
+    password: "{{ vault_vb_manager_password }}"
 
 pg_rbac_memberships:
   - { user: "joaopeixe", group: "db_admin_grp" }
   - { user: "joaopeixe", group: "app_rw_grp" }
   - { user: "nextcloud_user", group: "app_rw_grp" }
+  - { user: "vb_manager_user", group: "app_rw_grp" }
 
 # Network
 homelab_subnet: "192.168.1.0/24"
