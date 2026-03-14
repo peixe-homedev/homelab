@@ -1,0 +1,83 @@
+---
+- name: Deploy VB Manager API on db-server-01
+  hosts: db-server-01
+  become: yes
+
+  tasks:
+
+    # --- Docker
+    - name: Add Docker CE repository
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+
+    # --- Dependencies ---
+    - name: Ensure git is installed
+      dnf:
+        name: git
+        state: present
+
+    - name: Ensure Docker is installed
+      dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+
+    - name: Ensure Docker is running and enabled
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # --- App directory ---
+    - name: Ensure API directory exists
+      file:
+        path: "{{ api_deploy_path }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0750'
+
+    - name: Clone API repo
+      ansible.builtin.git:
+        repo: "https://{{ github_deploy_token }}@github.com/jpeixe72/vb-manager-api.git"
+        dest: "{{ api_deploy_path }}"
+        version: main
+        update: yes
+      no_log: true
+
+    # --- Config ---
+    - name: Deploy .env file from template
+      ansible.builtin.template:
+        src: api.env.j2
+        dest: "{{ api_deploy_path }}/.env"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0600'
+      no_log: true
+
+    # --- Build and run ---
+    - name: Build and start API container
+      community.docker.docker_compose_v2:
+        project_src: "{{ api_deploy_path }}"
+        build: always
+        state: present
+      notify: Restart API
+
+    # --- Firewall ---
+    - name: Allow trusted clients to reach the API on port 8000
+      ansible.posix.firewalld:
+        rich_rule: 'rule family="ipv4" source address="{{ item.ip }}" port port="8000" protocol="tcp" accept'
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop: "{{ api_trusted_clients }}"
+
+  handlers:
+    - name: Restart API
+      community.docker.docker_compose_v2:
+        project_src: "{{ api_deploy_path }}"
+        state: restarted

@@ -47,6 +47,7 @@ pg_rbac_memberships:
   - { user: "joaopeixe", group: "app_rw_grp" }
   - { user: "nextcloud_user", group: "app_rw_grp" }
   - { user: "vb_manager_user", group: "app_rw_grp" }
+  - { user: "joaopeixe", group: "vb_manager_user" }
 
 # Network
 homelab_subnet: "192.168.1.0/24"
@@ -65,3 +66,13 @@ smb_server_ip: 192.168.1.248
 smb_share_name: JPEIXE-WD
 smb_username: JPEIXE-WD
 # smb_domain: is optional, defaults to WORKGROUP
+
+# API Section
+api_repo_url: "git@github.com:yourusername/vb-manager-api.git"
+api_deploy_path: "/opt/vb-manager-api"
+api_db_name: "vb_manager_prd"
+api_db_user: "vb_manager_user"
+github_deploy_token: "{{ vault_github_deploy_token }}"
+api_trusted_clients:
+  - { ip: "192.168.1.203/32", comment: "vb-manager-prd (Streamlit)" }
+  - { ip: "192.168.1.11/32",  comment: "ASUS-TUF-2021 (dev)" }
