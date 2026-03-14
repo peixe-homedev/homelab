@@ -11,3 +11,6 @@ db_host: "192.168.1.201"
 db_port: "5432"
 db_name: "vb_manager_prd"
 db_user: "vb_manager_user"
+
+# Streamlit VM reaching db-server-01 via LAN
+api_base_url: "http://192.168.1.201:8000"
