@@ -30,3 +30,18 @@
   loop: "{{ pg_rbac_memberships }}"
   become: yes
   become_user: postgres
+
+# Task 3: Grant permissions on all tables to app_rw_grp
+- name: Grant app_rw_grp access to all tables and sequences
+  community.postgresql.postgresql_privs:
+    database: "{{ api_db_name }}"
+    role: app_rw_grp
+    privs: ALL
+    type: "{{ item }}"
+    objs: ALL_IN_SCHEMA
+    schema: public
+  loop:
+    - table
+    - sequence
+  become: yes
+  become_user: postgres
