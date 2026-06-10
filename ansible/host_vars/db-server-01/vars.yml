@@ -76,3 +76,6 @@ github_deploy_token: "{{ vault_github_deploy_token }}"
 api_trusted_clients:
   - { ip: "192.168.1.203/32", comment: "vb-manager-prd (Streamlit)" }
   - { ip: "192.168.1.11/32",  comment: "ASUS-TUF-2021 (dev)" }
+nextcloud_base_url: "http://192.168.1.204:8080/remote.php/dav/files/vb-manager/"
+nextcloud_user: "vb-manager"
+nextcloud_password: "{{ vault_nextcloud_password }}"
