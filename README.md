@@ -121,4 +121,4 @@ homelab/
 
 This project was built using [Claude](https://claude.ai) as an AI pair programmer. I am a Technical Writer by background, not a software developer, and AI is my primary development tool. The product and architectural decisions are mine; the implementation is the result of an extended collaborative process with Claude.
 
-After working with this codebase over a long period, I can broadly read and reason about it — follow the logic, understand the architecture, debug issues, and direct changes. Writing it from scratch without AI assistance would not be something I could honestly claim.
+After working with this codebase over a long period, I can broadly read and reason about it — follow the logic, understand the architecture, and direct changes. Writing it from scratch without AI assistance would not be something I could honestly claim.
