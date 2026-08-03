@@ -6,7 +6,7 @@
     ansible_remote_tmp: /tmp
   # vars_files:
   #   - "../host_vars/keycloak-01/vars.yml"
-  #   - "../host_vars/db-server-01/vault"
+  #   - "../host_vars/db-server/vault"
 
   tasks:
     - name: Ensure global tmp has correct permissions

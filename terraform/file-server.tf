@@ -1,5 +1,5 @@
 resource "proxmox_virtual_environment_vm" "nextcloud_vm" {
-  name      = "fileserver-01"
+  name      = "file-server"
   node_name = "pve"
   vm_id     = 204 # Incremented from your previous 204
 
@@ -38,13 +38,13 @@ resource "proxmox_virtual_environment_vm" "nextcloud_vm" {
 
     ip_config {
       ipv4 {
-        address = "192.168.1.204/24" # Adjusted to match the new VM ID
-        gateway = "192.168.1.1"
+        address = "10.0.1.204/24" # Adjusted to match the new VM ID
+        gateway = "10.0.1.1"
       }
     }
 
     dns {
-      servers = ["192.168.1.2", "8.8.8.8"]
+      servers = ["10.0.1.2", "8.8.8.8"]
     }
 
     user_account {

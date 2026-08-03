@@ -20,13 +20,13 @@ storage_disks:
 pg_hba_host_rules:
   - databases: nextcloud
     users: nextcloud_user
-    source: 192.168.1.204/32
+    source: 10.0.1.204/32
   - databases: vb_manager_prd
     users: vb_manager_user
-    source: 192.168.1.203/32
+    source: 10.0.1.203/32
   - databases: all
-    users: joaopeixe
-    source: 192.168.1.11/32
+    users: deploy_user
+    source: 10.0.1.11/32
 
 # RBAC Strategy - Tier A (Groups/Roles)
 pg_rbac_groups:
@@ -35,36 +35,36 @@ pg_rbac_groups:
 
 # RBAC Strategy - Tier B (Login Users)
 pg_rbac_users:
-  - name: "joaopeixe"
-    password: "{{ vault_joaopeixe_password }}"
+  - name: "deploy_user"
+    password: "{{ vault_deploy_user_password }}"
   - name: "nextcloud_user"
     password: "{{ vault_nextcloud_password }}"
   - name: "vb_manager_user"
     password: "{{ vault_vb_manager_password }}"
 
 pg_rbac_memberships:
-  - { user: "joaopeixe", group: "db_admin_grp" }
-  - { user: "joaopeixe", group: "app_rw_grp" }
+  - { user: "deploy_user", group: "db_admin_grp" }
+  - { user: "deploy_user", group: "app_rw_grp" }
   - { user: "nextcloud_user", group: "app_rw_grp" }
   - { user: "vb_manager_user", group: "app_rw_grp" }
-  - { user: "joaopeixe", group: "vb_manager_user" }
+  - { user: "deploy_user", group: "vb_manager_user" }
 
 # Network
-homelab_subnet: "192.168.1.0/24"
+homelab_subnet: "10.0.1.0/24"
 
 # Clients allowed to pass firewalld
 trusted_clients:
-  - { ip: "192.168.1.11/32", comment: "ASUS-TUF-2021" }
-  - { ip: "192.168.1.203/32", comment: "vb-manager-prd" }
-  - { ip: "192.168.1.204/32", comment: "fileserver-01" }
+  - { ip: "10.0.1.11/32", comment: "ASUS-TUF-2021" }
+  - { ip: "10.0.1.203/32", comment: "app-server" }
+  - { ip: "10.0.1.204/32", comment: "file-server" }
 
 # pgBackRest Configuration
 stanza_name: "demo"
 
 # SMB Config
-smb_server_ip: 192.168.1.248
-smb_share_name: JPEIXE-WD
-smb_username: JPEIXE-WD
+smb_server_ip: 10.0.1.248
+smb_share_name: HOMELAB-NAS
+smb_username: HOMELAB-NAS
 # smb_domain: is optional, defaults to WORKGROUP
 
 # API Section
@@ -74,8 +74,8 @@ api_db_name: "vb_manager_prd"
 api_db_user: "vb_manager_user"
 github_deploy_token: "{{ vault_github_deploy_token }}"
 api_trusted_clients:
-  - { ip: "192.168.1.203/32", comment: "vb-manager-prd (Streamlit)" }
-  - { ip: "192.168.1.11/32",  comment: "ASUS-TUF-2021 (dev)" }
-nextcloud_base_url: "http://192.168.1.204:8080/remote.php/dav/files/vb-manager/"
+  - { ip: "10.0.1.203/32", comment: "app-server (Streamlit)" }
+  - { ip: "10.0.1.11/32",  comment: "ASUS-TUF-2021 (dev)" }
+nextcloud_base_url: "http://10.0.1.204:8080/remote.php/dav/files/vb-manager/"
 nextcloud_user: "vb-manager"
 nextcloud_password: "{{ vault_nextcloud_password }}"

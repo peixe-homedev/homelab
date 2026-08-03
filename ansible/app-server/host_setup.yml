@@ -1,5 +1,5 @@
 - name: Setup Docker Host
-  hosts: vb-manager-prd
+  hosts: app-server
   become: yes
   vars:
     ansible_remote_tmp: /tmp

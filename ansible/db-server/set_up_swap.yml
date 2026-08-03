@@ -1,5 +1,5 @@
 - name: Configure swap memory
-  hosts: db-server-01
+  hosts: db-server
   become: yes
 
   tasks:

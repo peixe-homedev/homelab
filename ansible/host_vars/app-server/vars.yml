@@ -3,14 +3,14 @@ disk_serial: "APPDATA01"
 data_disk_path: "/dev/disk/by-id/scsi-SQEMU_QEMU_HARDDISK_{{ disk_serial }}"
 
 # Git Repo and Deployment destination
-repo_url: "https://oauth2:{{ vault_github_token }}@github.com/jpeixe72/VB_TeamManager.git"
+repo_url: "https://oauth2:{{ vault_github_token }}@github.com/peixe-homedev/vb-manager-app.git"
 dest_dir: "/home/ubuntu/Projects/vb-manager"
 
 # Database settings
-db_host: "192.168.1.201"
+db_host: "10.0.1.201"
 db_port: "5432"
 db_name: "vb_manager_prd"
 db_user: "vb_manager_user"
 
-# Streamlit VM reaching db-server-01 via LAN
-api_base_url: "http://192.168.1.201:8000"
+# Streamlit VM reaching db-server via LAN
+api_base_url: "http://10.0.1.201:8000"

@@ -1,21 +1,24 @@
 # --- VIRTUAL MACHINE DEFINITION ---
-resource "proxmox_virtual_environment_vm" "postgres_db" {
-  name      = "db-server-01"
-  node_name = "pve" # The name of the node in Proxmox
-  vm_id     = 201   # Matching the ID to the last octet of your IP (192.168.1.201)
+resource "proxmox_virtual_environment_vm" "app-server" {
+  name      = "app-server"
+  node_name = "pve" # The name of your physical laptop node in Proxmox
+  vm_id     = 203   # Matching the ID to the last octet of your IP (10.0.1.203)
 
-  # Tells Proxmox to use your AlmaLinux template as the starting point
+  # Hardware Globals
+  scsi_hardware = "virtio-scsi-pci" # Matches the template script
+
+  # Tells Proxmox to use the Liinux template as the starting point
   clone {
-    vm_id = 9000 
+    vm_id = 9001
   }
 
   cpu {
-    cores = 2 # Keeping it lean for laptop hardware
+    cores = 2 
     type ="host"
   }
 
   memory {
-    dedicated = 2048 # 1GB RAM is plenty for a small Postgres learning instance
+    dedicated = 2048
   }
 
   # Required for Proxmox to show the VM's internal IP and status correctly
@@ -31,26 +34,19 @@ resource "proxmox_virtual_environment_vm" "postgres_db" {
   # DISK 1: Operating System
   disk {
     datastore_id = "local-lvm"
+    file_format  = "raw"
     interface    = "scsi0" # Primary boot disk
     size         = 15      # In GB
   }
 
-  # DISK 2: Dedicated storage for PostgreSQL data
+  # DISK 2: Dedicated storage for data
   # This makes it easier to expand or backup data separately later
   disk {
     datastore_id = "local-lvm"
     file_format  = "raw"
     interface    = "scsi1"
     size         = 20      # In GB
-    serial       = "PGDATA01"
-  }
-  # DISK 3: Cron Backups (Dedicated space for pg_dump exports)
-  disk {
-    datastore_id = "local-lvm"
-    file_format  = "raw"
-    interface    = "scsi2"
-    size         = 15
-    serial       = "PGBACKUP01"
+    serial       = "APPDATA01"
   }
 
   # --- CLOUD-INIT (THE "AUTOPILOT") ---
@@ -59,21 +55,22 @@ resource "proxmox_virtual_environment_vm" "postgres_db" {
     
     ip_config {
       ipv4 {
-        address = "192.168.1.201/24" # Static IP assignment
-        gateway = "192.168.1.1"
+        address = "10.0.1.203/24" # Static IP assignment
+        gateway = "10.0.1.1"
       }
     }
 
     # DNS BLOCK:
     dns {
-      servers = ["192.168.1.2", "8.8.8.8"]
+      servers = ["10.0.1.2", "8.8.8.8"]
     }
     
     # Injects your SSH Public Key so you can log in without a password later
     user_account {
-      username = "almalinux"  
+      username = "ubuntu"  
       keys = [var.ssh_public_key]
     }
+
   }
   lifecycle {
     ignore_changes = [

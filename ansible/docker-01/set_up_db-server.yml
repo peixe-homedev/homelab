@@ -1,6 +1,6 @@
 ---
 - name: Allow Docker Host Access to Postgres
-  hosts: db_servers  # Make sure this matches your inventory group for db-server-01
+  hosts: db_servers  # Make sure this matches your inventory group for db-server
   become: yes
   vars_files: ../host_vars/docker-01/vars.yml
 

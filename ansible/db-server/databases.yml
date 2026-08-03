@@ -7,7 +7,7 @@
   become: yes
   become_user: postgres
 
-- name: Create vb-manager-prd Database
+- name: Create app-server Database
   community.postgresql.postgresql_db:
     name: vb_manager_prd
     owner: vb_manager_user

@@ -1,0 +1,7 @@
+proxmox_api_url          = "https://proxmox.example.com:8006/api2/json"
+proxmox_api_token_id     = "your-token-id"
+proxmox_api_token_secret = "your-api-token-secret"
+ssh_public_key           = "ssh-ed25519 AAAA... your_key_comment"
+pve_password             = "your-proxmox-root-password"
+wd_username              = "your-nas-username"
+wd_password              = "your-nas-password"

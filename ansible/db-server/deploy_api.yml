@@ -1,6 +1,6 @@
 ---
-- name: Deploy VB Manager API on db-server-01
-  hosts: db-server-01
+- name: Deploy VB Manager API on db-server
+  hosts: db-server
   become: yes
 
   tasks:
@@ -43,7 +43,7 @@
 
     - name: Clone API repo
       ansible.builtin.git:
-        repo: "https://{{ github_deploy_token }}@github.com/jpeixe72/vb-manager-api.git"
+        repo: "https://{{ github_deploy_token }}@github.com/peixe-homedev/vb-manager-api.git"
         dest: "{{ api_deploy_path }}"
         version: main
         update: yes

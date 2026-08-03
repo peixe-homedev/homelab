@@ -34,8 +34,8 @@ resource "proxmox_virtual_environment_container" "docker_lxc" {
     
     ip_config {
       ipv4 {
-        address = "192.168.1.202/24" # New Static IP
-        gateway = "192.168.1.1"
+        address = "10.0.1.202/24" # New Static IP
+        gateway = "10.0.1.1"
       }
     }
 

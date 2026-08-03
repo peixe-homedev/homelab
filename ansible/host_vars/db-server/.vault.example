@@ -1,0 +1,8 @@
+# This file shows vault variable names only.
+# The real vault file must be Ansible-vault-encrypted.
+# Encrypt with: ansible-vault encrypt ansible/host_vars/db-server/vault
+#
+vault_deploy_user_password: ''
+vault_vb_manager_password: ''
+vault_nextcloud_password: ''
+vault_github_deploy_token: ''

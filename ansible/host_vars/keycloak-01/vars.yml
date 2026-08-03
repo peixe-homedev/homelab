@@ -8,7 +8,7 @@ app_schema_role: "keycloak_schema_role"
 app_admin_group: "db_admin_grp"
 
 # Network Access
-app_db_host_ip: "192.168.1.201"
+app_db_host_ip: "10.0.1.201"
 app_db_port: 5432
 
 # Path settings (AlmaLinux defaults)

@@ -1,6 +1,6 @@
 ---
 - name: Prepare Nextcloud Docker Host
-  hosts: fileserver-01
+  hosts: file-server
   become: yes
 
   tasks:

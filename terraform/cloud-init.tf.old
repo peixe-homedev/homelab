@@ -9,7 +9,7 @@ resource "proxmox_virtual_environment_file" "cloud_config" {
 #cloud-config
 # 1. Mount the WD Cloud with SMB 3.0
 mounts:
-  - [ "//192.168.1.248/JPEIXE-WD", "/mnt/wd_cloud", "cifs", "username=${var.wd_username},password=${var.wd_password},iocharset=utf8,vers=3.0,noperm", "0", "0" ]
+  - [ "//10.0.1.248/HOMELAB-NAS", "/mnt/wd_cloud", "cifs", "username=${var.wd_username},password=${var.wd_password},iocharset=utf8,vers=3.0,noperm", "0", "0" ]
 
 # 2. Finalize System Preparation
 runcmd:

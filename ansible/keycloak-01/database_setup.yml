@@ -1,6 +1,6 @@
 ---
 - name: Keycloak Database and Dedicated RBAC Setup
-  hosts: db-server-01
+  hosts: db-server
   become: true
   vars_files: ../host_vars/keycloak-01/vars.yml
 

@@ -1,6 +1,6 @@
 ---
 - name: Configure PostgreSQL 17 Backups with pgBackRest
-  hosts: db-server-01
+  hosts: db-server
   become: yes
 
   tasks:

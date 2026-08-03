@@ -1,6 +1,6 @@
 ---
 - name: Manage PostgreSQL
-  hosts: db-server-01  # Specific to this host
+  hosts: db-server  # Specific to this host
   become: yes
 
   tasks:
