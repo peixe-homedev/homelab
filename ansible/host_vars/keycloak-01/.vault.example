@@ -1,0 +1,4 @@
+# Placeholder. Real values live in an ansible-encrypted file next to this one (not in this repo).
+vault_keycloak_admin_user: "CHANGE_ME"
+vault_keycloak_admin_password: "CHANGE_ME"
+vault_keycloak_db_password: "CHANGE_ME"

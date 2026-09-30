@@ -6,3 +6,4 @@ vault_deploy_user_password: ''
 vault_vb_manager_password: ''
 vault_nextcloud_password: ''
 vault_github_deploy_token: ''
+vault_smb_password: "CHANGE_ME"

@@ -4,6 +4,7 @@
 *.tfstate.backup
 .terraform/
 .vault_pass*
+ansible/host_vars/*/vault
 .env
 .env.*
 *.pem
